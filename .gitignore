@@ -187,3 +187,8 @@ FakesAssemblies/
 GeneratedArtifacts/
 _Pvt_Extensions/
 ModelManifest.xml
+/MonitorFolderActivity/app.config
+/.vs/MonitorFolderActivity/v15/Server/sqlite3/storage.ide-wal
+/.vs/MonitorFolderActivity/v15/Server/sqlite3/storage.ide-shm
+/.vs/MonitorFolderActivity/v15/Server/sqlite3/storage.ide
+/.vs/MonitorFolderActivity/v15/Server/sqlite3/db.lock
