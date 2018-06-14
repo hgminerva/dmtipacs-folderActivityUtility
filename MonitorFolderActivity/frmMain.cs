@@ -18,6 +18,8 @@ using System.IO;
 // be raised from the monitor is comming from a different
 // thread that will run on your code.
 using System.Threading;
+using System.Diagnostics;
+using System.Web.Script.Serialization;
 
 namespace DMTIPACSFolderActivityUtility
 {
@@ -31,7 +33,8 @@ namespace DMTIPACSFolderActivityUtility
             InitializeComponent();
 
             // Auto start - HGM
-            txtFolderPath.Text = "C:\\DMTIPACS";
+            txtFolderPath.Text = "C:\\Users\\Developer\\Downloads";
+            txtProgramPath.Text = "C:\\Program Files\\RadiAntViewer64bit\\RadiAntViewer.exe";
             btnStart_Stop.Text = "Stop";
             startActivityMonitoring(txtFolderPath.Text);
         }
@@ -110,7 +113,8 @@ namespace DMTIPACSFolderActivityUtility
             }
             else
             {
-                txtActivity.Text += text;
+                // txtActivity.Text += text;
+                txtActivity.Text = text;
             }
         }
 
@@ -124,20 +128,65 @@ namespace DMTIPACSFolderActivityUtility
         {
             switch (e.ChangeType)
             {
-                case WatcherChangeTypes.Changed:
-                    TS_AddLogText(string.Format("File {0} has been modified\r\n", e.FullPath));
+                //case WatcherChangeTypes.Changed:
+                //TS_AddLogText(string.Format("File {0} has been modified\r\n", e.FullPath));
 
-                    break;
-                case WatcherChangeTypes.Created:
-                    TS_AddLogText(string.Format("File {0} has been created\r\n", e.FullPath));
+                //break;
+                //case WatcherChangeTypes.Created:
+                //    TS_AddLogText(string.Format("File {0} has been created\r\n", e.FullPath));
+                //    openDicomFiles(txtFolderPath.Text + "\\" + e.FullPath);
 
-                    break;
-                case WatcherChangeTypes.Deleted:
-                    TS_AddLogText(string.Format("File {0} has been deleted\r\n", e.FullPath));
+                //    break;
 
-                    break;
+                //case WatcherChangeTypes.Renamed:
+                //    TS_AddLogText(string.Format("File {0} has been created\r\n", e.FullPath));
+                //    openDicomFiles(txtFolderPath.Text + "\\" + e.FullPath);
+
+                //    break;
+
+                //case WatcherChangeTypes.Deleted:
+                //TS_AddLogText(string.Format("File {0} has been deleted\r\n", e.FullPath));
+
+                //break;
                 default: // Another action
                     break;
+            }
+        }
+
+
+        public void openDicomFiles(string fullPath)
+        {
+            if (fullPath.Substring(fullPath.Length - 4) == "json")
+            {
+                // ==============
+                // Read json file
+                // ==============
+                String json;
+                using (StreamReader r = new StreamReader(fullPath))
+                {
+                    json = r.ReadToEnd();
+                }
+
+                var json_serializer = new JavaScriptSerializer();
+                Procedure p = json_serializer.Deserialize<Procedure>(json);
+
+                string[] dicomFiles = p.DICOMFileName.Split(';');
+                string parameter = "";
+
+                if(dicomFiles.Length > 0)
+                {
+                    foreach(string dicomFile in dicomFiles)
+                    {
+                        parameter = parameter + System.IO.Path.GetDirectoryName(dicomFile) + " ";
+                    } 
+                } else
+                {
+                    parameter = System.IO.Path.GetDirectoryName(p.DICOMFileName);
+                }
+
+                System.Diagnostics.Process.Start(txtProgramPath.Text,  " -d " + parameter);
+
+                File.Delete(fullPath);
             }
         }
 
@@ -148,7 +197,9 @@ namespace DMTIPACSFolderActivityUtility
         /// <param name="e"></param>
         public void eventRenameRaised(object sender, System.IO.RenamedEventArgs e)
         {
-            TS_AddLogText(string.Format("File {0} has been renamed to {1}\r\n", e.OldName, e.Name));
+            //TS_AddLogText(string.Format("File {0} has been renamed to {1}\r\n", e.OldName, e.Name));
+            TS_AddLogText(e.Name);
+            openDicomFiles(txtFolderPath.Text + "\\" + e.Name);
         }
 
         private void btnStart_Stop_Click(object sender, EventArgs e)
@@ -164,5 +215,16 @@ namespace DMTIPACSFolderActivityUtility
                 stopActivityMonitoring();
             }
         }
+
+        private void frmMain_Load(object sender, EventArgs e)
+        {
+
+        }
+
+    }
+
+    public class Procedure
+    {
+        public String DICOMFileName { get; set; }
     }
 }
