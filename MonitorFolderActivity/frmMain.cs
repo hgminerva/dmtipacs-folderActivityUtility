@@ -20,6 +20,8 @@ using System.IO;
 using System.Threading;
 using System.Diagnostics;
 using System.Web.Script.Serialization;
+using System.Collections.Generic;
+using System.Reflection;
 
 namespace DMTIPACSFolderActivityUtility
 {
@@ -34,8 +36,23 @@ namespace DMTIPACSFolderActivityUtility
 
             // Auto start - HGM
             //txtFolderPath.Text = "C:\\Users\\Developer\\Downloads";
-            txtFolderPath.Text = "C:\\DMTIPACS";
-            txtProgramPath.Text = "C:\\Program Files\\RadiAntViewer64bit\\RadiAntViewer.exe";
+            //Debug.WriteLine(System.IO.Directory.GetCurrentDirectory(););
+            string settingsPath = Application.StartupPath + @"\settings.json";
+
+            String json;
+            using (StreamReader r = new StreamReader(settingsPath))
+            {
+                json = r.ReadToEnd();
+            }
+            
+            var json_serializer = new JavaScriptSerializer();
+            SystemConfig systemConfig = json_serializer.Deserialize<SystemConfig>(json);
+
+            String folderPath = systemConfig.FolderPath;
+            String programPath = systemConfig.ProgramPath;
+
+            txtFolderPath.Text = folderPath;
+            txtProgramPath.Text = programPath;
             btnStart_Stop.Text = "Stop";
             startActivityMonitoring(txtFolderPath.Text);
         }
@@ -169,23 +186,28 @@ namespace DMTIPACSFolderActivityUtility
                 }
 
                 var json_serializer = new JavaScriptSerializer();
-                Procedure p = json_serializer.Deserialize<Procedure>(json);
-
-                string[] dicomFiles = p.DICOMFileName.Split(';');
                 string parameter = "";
 
-                if(dicomFiles.Length > 0)
+                List<Procedure> procedureLists = json_serializer.Deserialize<List<Procedure>>(json);
+
+                foreach (var procedureList in procedureLists)
                 {
-                    foreach(string dicomFile in dicomFiles)
+                    String[] dicomFiles = procedureList.DICOMFileName.Split(';');
+
+                    if (dicomFiles.Length > 0)
                     {
-                        parameter = parameter + System.IO.Path.GetDirectoryName(dicomFile) + " ";
-                    } 
-                } else
-                {
-                    parameter = System.IO.Path.GetDirectoryName(p.DICOMFileName);
+                        foreach (string dicomFile in dicomFiles)
+                        {
+                            parameter += Path.GetDirectoryName(dicomFile) + " ";
+                        }
+                    }
+                    else
+                    {
+                        parameter = Path.GetDirectoryName(procedureList.DICOMFileName);
+                    }
                 }
 
-                System.Diagnostics.Process.Start(txtProgramPath.Text,  " -d " + parameter);
+                Process.Start(txtProgramPath.Text, " -d " + parameter);
 
                 File.Delete(fullPath);
             }
@@ -244,12 +266,18 @@ namespace DMTIPACSFolderActivityUtility
         {
             Show();
             this.WindowState = FormWindowState.Normal;
-        }  
+        }
 
     }
 
     public class Procedure
     {
         public String DICOMFileName { get; set; }
+    }
+
+    public class SystemConfig
+    {
+        public String FolderPath { get; set; }
+        public String ProgramPath { get; set; }
     }
 }
