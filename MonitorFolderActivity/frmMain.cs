@@ -33,7 +33,8 @@ namespace DMTIPACSFolderActivityUtility
             InitializeComponent();
 
             // Auto start - HGM
-            txtFolderPath.Text = "C:\\Users\\Developer\\Downloads";
+            //txtFolderPath.Text = "C:\\Users\\Developer\\Downloads";
+            txtFolderPath.Text = "C:\\DMTIPACS";
             txtProgramPath.Text = "C:\\Program Files\\RadiAntViewer64bit\\RadiAntViewer.exe";
             btnStart_Stop.Text = "Stop";
             startActivityMonitoring(txtFolderPath.Text);
@@ -218,8 +219,32 @@ namespace DMTIPACSFolderActivityUtility
 
         private void frmMain_Load(object sender, EventArgs e)
         {
-
+            notifyIcon.Visible = true;
         }
+
+        private void frmMain_Resize(object sender, EventArgs e)
+        {
+            //if the form is minimized  
+            //hide it from the task bar  
+            //and show the system tray icon (represented by the NotifyIcon control)  
+            if (this.WindowState == FormWindowState.Minimized)
+            {
+                Hide();
+            }
+        }
+
+        private void frmMain_FormClosing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            e.Cancel = true;
+            this.WindowState = FormWindowState.Minimized;
+            Hide();
+        }
+
+        private void notifyIcon_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            Show();
+            this.WindowState = FormWindowState.Normal;
+        }  
 
     }
 
